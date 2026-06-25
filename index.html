@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fios de Itapoá — Gerador de Prompt</title>
+  <style>
+    /* ============================================================
+       VARIÁVEIS DE COR E TIPOGRAFIA
+       Para editar cores, mude os valores aqui.
+       --azul-escuro  → cor principal do cabeçalho e títulos
+       --ambar        → cor de destaque (botão principal)
+       --creme        → fundo geral da página
+    ============================================================ */
+    :root {
+      --azul-escuro:  #1F3864;
+      --ambar:        #E8A020;
+      --creme:        #FDF8EF;
+      --creme-escuro: #EDE5D5;
+      --texto:        #1a1a2e;
+      --texto-claro:  #ffffff;
+      --borda:        #d0c4b0;
+      --verde-ok:     #3B6D11;
+      --erro:         #c0392b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: var(--creme);
+      color: var(--texto);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ---------- CABEÇALHO ---------- */
+    header {
+      background-color: var(--azul-escuro);
+      color: var(--texto-claro);
+      padding: 18px 20px 14px;
+      text-align: center;
+    }
+    header h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: 0.06em; }
+    header p  { font-size: 0.82rem; opacity: 0.75; margin-top: 4px; }
+
+    /* ---------- BARRA DE PROGRESSO (4 passos) ---------- */
+    .progresso {
+      background: var(--azul-escuro);
+      padding: 0 20px 16px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    .passo {
+      width: 40px; height: 6px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.25);
+      transition: background 0.3s;
+    }
+    .passo.ativo    { background: var(--ambar); }
+    .passo.concluido { background: rgba(255,255,255,0.65); }
+
+    /* ---------- CONTAINER PRINCIPAL ---------- */
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 28px 16px 56px;
+    }
+
+    /* ---------- TÍTULOS DE TELA ---------- */
+    .titulo-tela {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--azul-escuro);
+      margin-bottom: 6px;
+    }
+    .subtitulo-tela {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 28px;
+    }
+
+    /* ============================================================
+       TELA 1 — CARDS DE ESTILO VISUAL
+    ============================================================ */
+    .grid-estilos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+      gap: 16px;
+    }
+
+    .card-estilo {
+      border: 2px solid var(--borda);
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+      background: white;
+    }
+    .card-estilo:hover,
+    .card-estilo:focus {
+      border-color: var(--ambar);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 18px rgba(30,56,100,0.15);
+      outline: 3px solid var(--ambar);
+      outline-offset: 2px;
+    }
+
+    /* Área visual de cada card — feita só com CSS, sem imagens externas */
+    .amostra {
+      width: 100%;
+      height: 118px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 1 · POSTER MINIMALISTA — fundo claro, tipografia preta dominante */
+    .amostra-minimalista { background: #f5f5f0; }
+    .amostra-minimalista::before {
+      content: "FIOS";
+      font-size: 3.2rem; font-weight: 900;
+      color: #1a1a1a; letter-spacing: -3px; line-height: 1;
+    }
+    .amostra-minimalista::after {
+      content: "";
+      position: absolute; bottom: 18px; left: 20px; right: 20px;
+      height: 2px; background: #1a1a1a;
+    }
+
+    /* 2 · EDITORIAL DE REVISTA — dois blocos de cor */
+    .amostra-editorial {
+      background: #1D4E5C;
+      display: grid; grid-template-columns: 55% 45%;
+    }
+    .amostra-editorial::before {
+      content: "EDI\ATORIA L";
+      font-size: 1.3rem; font-weight: 900;
+      color: #fff; padding: 10px; align-self: end; line-height: 1.1;
+      white-space: pre;
+    }
+    .amostra-editorial::after {
+      content: ""; background: var(--ambar);
+    }
+
+    /* 3 · LINHA FINA ILUSTRATIVA — SVG inline de folha */
+    .amostra-linha { background: #fafaf8; }
+    .amostra-linha svg { width: 78px; height: 78px; }
+
+    /* 4 · POP CONTEMPORÂNEO — diagonal de duas cores vibrantes */
+    .amostra-pop {
+      background: linear-gradient(135deg, #E8A020 50%, #1D4E5C 50%);
+    }
+    .amostra-pop::before {
+      content: "POP";
+      font-size: 2.8rem; font-weight: 900;
+      color: white; text-shadow: 2px 2px 0 rgba(0,0,0,0.25);
+    }
+
+    /* 5 · ARQUIVO / DOSSIÊ — fundo escuro, fonte monoespaçada */
+    .amostra-arquivo {
+      background: #131320;
+      flex-direction: column; align-items: flex-start;
+      padding: 12px; gap: 5px;
+    }
+    .amostra-arquivo::before {
+      content: "DOC_001.txt ────";
+      font-family: 'Courier New', monospace;
+      font-size: 0.68rem; color: #7dc8d8;
+    }
+    .amostra-arquivo::after {
+      content: "FICHA DE PESQUISA\n─────────────────\nSociologia · 1º Ano";
+      font-family: 'Courier New', monospace;
+      font-size: 0.62rem; color: #5aaa80; white-space: pre;
+    }
+
+    /* 6 · DADO EM DESTAQUE — número gigante como imagem */
+    .amostra-dado { background: #f5f5f0; }
+    .amostra-dado::before {
+      content: "42";
+      font-size: 5.5rem; font-weight: 900;
+      color: #C1543C; line-height: 1;
+    }
+
+    /* Info textual abaixo da amostra visual */
+    .card-info { padding: 12px 14px 14px; }
+    .card-nome {
+      font-size: 0.82rem; font-weight: 800;
+      color: var(--azul-escuro);
+      text-transform: uppercase; letter-spacing: 0.07em;
+      margin-bottom: 4px;
+    }
+    .card-descricao { font-size: 0.8rem; color: #666; }
+
+    /* ============================================================
+       TELA 2 — TURMA E CONFIGURAÇÃO
+    ============================================================ */
+    .grupo-botoes { margin-bottom: 30px; }
+    .label-grupo {
+      display: block;
+      font-size: 1rem; font-weight: 700;
+      color: var(--azul-escuro); margin-bottom: 12px;
+    }
+
+    .botoes-opcao { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    /* Botões de turma */
+    .btn-turma {
+      padding: 13px 22px;
+      border: 2px solid var(--borda);
+      border-radius: 10px; background: white;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: all 0.18s;
+      font-family: inherit; color: var(--texto);
+      min-width: 80px; text-align: center;
+    }
+    .btn-turma:hover  { border-color: var(--ambar); background: #FFF8EC; }
+    .btn-turma.selecionado {
+      border-color: var(--azul-escuro);
+      background: var(--azul-escuro); color: white;
+    }
+
+    /* Botões de configuração da dupla */
+    .btn-config {
+      padding: 16px 18px;
+      border: 2px solid var(--borda);
+      border-radius: 12px; background: white;
+      font-size: 0.9rem; cursor: pointer;
+      transition: all 0.18s; font-family: inherit;
+      color: var(--texto); text-align: left;
+      width: 100%; max-width: 440px;
+    }
+    .btn-config:hover  { border-color: var(--ambar); background: #FFF8EC; }
+    .btn-config.selecionado { border-color: var(--azul-escuro); background: #EEF2F9; }
+    .btn-config strong { display: block; font-size: 0.95rem; color: var(--azul-escuro); margin-bottom: 4px; }
+    .btn-config span   { font-size: 0.8rem; color: #666; }
+
+    /* ============================================================
+       TELA 3 — FORMULÁRIO
+    ============================================================ */
+    .campo { margin-bottom: 26px; }
+    .campo label {
+      display: block; font-weight: 700;
+      color: var(--azul-escuro); margin-bottom: 7px; font-size: 0.97rem;
+    }
+    .campo input[type="text"] {
+      width: 100%; padding: 13px 15px;
+      border: 2px solid var(--borda); border-radius: 9px;
+      font-size: 1rem; font-family: inherit;
+      background: white; color: var(--texto);
+      transition: border-color 0.2s;
+    }
+    .campo input[type="text"]:focus {
+      outline: none; border-color: var(--azul-escuro);
+    }
+    .campo-ajuda {
+      font-size: 0.8rem; color: #888;
+      margin-top: 6px; font-style: italic;
+    }
+    /* Dica destacada (preenchida dinamicamente para a frase de impacto) */
+    .campo-ajuda.destaque {
+      color: #6a4a00; background: #FFF8EC;
+      border-left: 4px solid var(--ambar);
+      padding: 7px 11px; border-radius: 0 5px 5px 0;
+      font-style: normal; font-weight: 500;
+    }
+
+    /* Botões de dimensão de significado */
+    .botoes-dimensao { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-dimensao {
+      padding: 12px 18px;
+      border: 2px solid var(--borda); border-radius: 9px;
+      background: white; font-size: 0.95rem;
+      cursor: pointer; transition: all 0.18s; font-family: inherit;
+      font-weight: 600;
+    }
+    .btn-dimensao:hover { border-color: var(--ambar); }
+
+    /* Cada dimensão tem sua própria cor quando selecionada */
+    .btn-dimensao[data-dim="Memória"].selecionado       { background: #C1543C; border-color: #C1543C; color: white; }
+    .btn-dimensao[data-dim="Identidade"].selecionado    { background: #1D4E5C; border-color: #1D4E5C; color: white; }
+    .btn-dimensao[data-dim="Pertencimento"].selecionado { background: #3B6D11; border-color: #3B6D11; color: white; }
+
+    /* ============================================================
+       TELA 4 — PROMPT PRONTO
+    ============================================================ */
+    .tag-estilo {
+      display: inline-block;
+      background: var(--azul-escuro); color: white;
+      padding: 4px 14px; border-radius: 20px;
+      font-size: 0.8rem; margin-bottom: 16px;
+    }
+
+    .caixa-instrucao {
+      background: #EEF2F9;
+      border-radius: 10px; padding: 14px 16px;
+      font-size: 0.88rem; color: var(--azul-escuro);
+      margin-bottom: 18px; line-height: 1.7;
+    }
+    .caixa-instrucao strong { display: block; margin-bottom: 5px; font-size: 0.92rem; }
+
+    .bloco-prompt {
+      background: #131320; color: #e4e4e4;
+      border-radius: 12px; padding: 20px 18px;
+      font-size: 0.93rem; line-height: 1.75;
+      white-space: pre-wrap; word-break: break-word;
+      margin-bottom: 16px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      border: 1px solid #2a2a4a;
+    }
+
+    /* ============================================================
+       BOTÕES DE AÇÃO GLOBAIS
+    ============================================================ */
+    .btn-principal {
+      display: block; width: 100%; padding: 17px;
+      background: var(--ambar); color: #1a1000;
+      border: none; border-radius: 11px;
+      font-size: 1.08rem; font-weight: 800;
+      cursor: pointer; transition: all 0.18s;
+      font-family: inherit; text-align: center;
+      margin-top: 8px;
+    }
+    .btn-principal:hover { background: #d08010; transform: translateY(-1px); }
+    .btn-principal:active { transform: translateY(0); }
+
+    .btn-copiar {
+      display: block; width: 100%; padding: 17px;
+      background: var(--verde-ok); color: white;
+      border: none; border-radius: 11px;
+      font-size: 1.08rem; font-weight: 800;
+      cursor: pointer; transition: all 0.18s;
+      font-family: inherit; text-align: center;
+    }
+    .btn-copiar:hover   { background: #2d5509; }
+    .btn-copiar.copiado { background: #27ae60; }
+
+    .btn-secundario {
+      display: block; width: 100%; padding: 14px;
+      background: transparent; color: var(--azul-escuro);
+      border: 2px solid var(--azul-escuro); border-radius: 11px;
+      font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s;
+      font-family: inherit; text-align: center;
+      margin-top: 10px;
+    }
+    .btn-secundario:hover { background: var(--azul-escuro); color: white; }
+
+    /* Mensagem de erro */
+    .msg-erro {
+      background: #FDECEA; border: 1px solid #F5C6C2;
+      border-radius: 9px; color: var(--erro);
+      padding: 12px 16px; font-size: 0.9rem;
+      margin-bottom: 14px; display: none;
+    }
+
+    /* Divisor visual */
+    hr.divisor { border: none; border-top: 1px solid var(--creme-escuro); margin: 22px 0; }
+
+    /* Controle de visibilidade das telas */
+    .tela { display: none; }
+    .tela.ativa { display: block; }
+
+    /* ============================================================
+       SEÇÃO DE CORES — seletor de cor complementar da dupla
+       Para mudar as cores da paleta, edite o objeto "paleta"
+       no JavaScript abaixo (variável var paleta = {...}).
+    ============================================================ */
+    .secao-cor {
+      background: white;
+      border: 2px solid var(--borda);
+      border-radius: 12px;
+      padding: 18px 18px 20px;
+      margin-bottom: 28px;
+    }
+    .secao-cor .label-grupo { margin-bottom: 12px; }
+
+    .pergunta-ordem { font-size: 0.9rem; color: #444; margin-bottom: 12px; }
+
+    .botoes-ordem { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .btn-ordem {
+      padding: 11px 22px;
+      border: 2px solid var(--borda); border-radius: 9px;
+      background: white; font-size: 0.92rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s; font-family: inherit;
+    }
+    .btn-ordem:hover { border-color: var(--ambar); background: #FFF8EC; }
+    .btn-ordem.selecionado { background: var(--azul-escuro); border-color: var(--azul-escuro); color: white; }
+
+    .instrucao-cor { font-size: 0.88rem; color: #555; margin: 16px 0 12px; }
+
+    /* Grade de bolinhas de cor */
+    .grade-cores { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+
+    .swatch-item { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+
+    .swatch {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+    }
+    .swatch:hover  { transform: scale(1.12); }
+    .swatch:focus  { outline: 3px solid var(--ambar); outline-offset: 3px; }
+
+    /* Minha cor selecionada (primeiro estudante) */
+    .swatch.minha-cor {
+      border-color: #fff;
+      box-shadow: 0 0 0 3px var(--azul-escuro);
+      transform: scale(1.12);
+    }
+    /* Cor do colega (segundo estudante clicou aqui) */
+    .swatch.cor-colega {
+      opacity: 0.35;
+      border-color: #aaa;
+      cursor: default;
+    }
+    /* Minha cor complementar (segundo estudante — seleção automática) */
+    .swatch.complementar {
+      border-color: #fff;
+      box-shadow: 0 0 0 3px var(--verde-ok);
+      transform: scale(1.12);
+    }
+
+    .swatch-label { font-size: 0.68rem; color: #555; text-align: center; max-width: 56px; line-height: 1.2; }
+
+    /* Avisos após escolha de cor */
+    .aviso-parceiro {
+      background: #EEF2F9;
+      border-left: 4px solid var(--azul-escuro);
+      border-radius: 0 8px 8px 0;
+      padding: 10px 14px; margin-top: 14px;
+      font-size: 0.87rem; color: var(--azul-escuro); line-height: 1.6;
+    }
+    .aviso-parceiro strong { display: block; margin-bottom: 3px; font-size: 0.92rem; }
+
+    .aviso-complementar {
+      background: #EEF8EC;
+      border-left: 4px solid var(--verde-ok);
+      border-radius: 0 8px 8px 0;
+      padding: 10px 14px; margin-top: 14px;
+      font-size: 0.87rem; color: #1f4a07; line-height: 1.6;
+    }
+    .aviso-complementar strong { display: block; margin-bottom: 3px; font-size: 0.92rem; }
+
+    /* ============================================================
+       RESPONSIVIDADE — celular pequeno
+    ============================================================ */
+    @media (max-width: 480px) {
+      .grid-estilos { grid-template-columns: 1fr 1fr; }
+      .titulo-tela  { font-size: 1.2rem; }
+      .bloco-prompt { font-size: 0.84rem; }
+    }
+    @media (max-width: 340px) {
+      .grid-estilos { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     CABEÇALHO FIXO
+============================================================ -->
+<header>
+  <h1>FIOS DE ITAPOÁ</h1>
+  <p>Gerador de prompt para ficha-postal &nbsp;·&nbsp; Sociologia &nbsp;·&nbsp; 1º Ano &nbsp;·&nbsp; EEB Nereu Ramos</p>
+</header>
+
+<!-- Barra de progresso: 4 etapas -->
+<div class="progresso" role="progressbar" aria-label="Progresso do formulário">
+  <div class="passo ativo"  id="passo-1" title="Etapa 1: Estilo"></div>
+  <div class="passo"        id="passo-2" title="Etapa 2: Turma"></div>
+  <div class="passo"        id="passo-3" title="Etapa 3: Dados"></div>
+  <div class="passo"        id="passo-4" title="Etapa 4: Prompt"></div>
+</div>
+
+<main>
+
+  <!-- ============================================================
+       TELA 1 — ESCOLHA DO ESTILO VISUAL
+  ============================================================ -->
+  <div id="tela-1" class="tela ativa">
+    <h2 class="titulo-tela">Qual estilo visual combina com a sua ficha?</h2>
+    <p class="subtitulo-tela">Clique no card do estilo que você quer. Cada um gera um tipo diferente de imagem.</p>
+
+    <div class="grid-estilos">
+
+      <!-- 1 · Poster Minimalista -->
+      <div class="card-estilo" tabindex="0" role="button"
+           onclick="escolherEstilo(1)" onkeydown="teclaCard(event,1)"
+           aria-label="Escolher: Poster Minimalista">
+        <div class="amostra amostra-minimalista" aria-hidden="true"></div>
+        <div class="card-info">
+          <div class="card-nome">Poster Minimalista</div>
+          <div class="card-descricao">Tipografia grande é a estrela. Limpo e direto.</div>
+        </div>
+      </div>
+
+      <!-- 2 · Editorial de Revista -->
+      <div class="card-estilo" tabindex="0" role="button"
+           onclick="escolherEstilo(2)" onkeydown="teclaCard(event,2)"
+           aria-label="Escolher: Editorial de Revista">
+        <div class="amostra amostra-editorial" aria-hidden="true"></div>
+        <div class="card-info">
+          <div class="card-nome">Editorial de Revista</div>
+          <div class="card-descricao">Blocos de cor organizando o espaço.</div>
+        </div>
+      </div>
+
+      <!-- 3 · Linha Fina Ilustrativa -->
+      <div class="card-estilo" tabindex="0" role="button"
+           onclick="escolherEstilo(3)" onkeydown="teclaCard(event,3)"
+           aria-label="Escolher: Linha Fina Ilustrativa">
+        <div class="amostra amostra-linha" aria-hidden="true">
+          <!-- SVG de folha feito com linha fina — sem imagem externa -->
+          <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M40 8 C57 20 65 37 60 56 C55 70 40 76 40 76 C40 76 25 70 20 56 C15 37 23 20 40 8Z"
+                  fill="none" stroke="#2a5a3a" stroke-width="1.5"/>
+            <line x1="40" y1="8" x2="40" y2="76" stroke="#2a5a3a" stroke-width="1"/>
+            <path d="M40 28 C52 34 57 42 51 53" fill="none" stroke="#2a5a3a" stroke-width="1"/>
+            <path d="M40 34 C28 40 23 48 29 56" fill="none" stroke="#2a5a3a" stroke-width="1"/>
+            <path d="M40 46 C47 48 50 52 47 58" fill="none" stroke="#2a5a3a" stroke-width="0.8"/>
+          </svg>
+        </div>
+        <div class="card-info">
+          <div class="card-nome">Linha Fina Ilustrativa</div>
+          <div class="card-descricao">Um desenho de linha fina como centro.</div>
+        </div>
+      </div>
+
+      <!-- 4 · Pop Contemporâneo -->
+      <div class="card-estilo" tabindex="0" role="button"
+           onclick="escolherEstilo(4)" onkeydown="teclaCard(event,4)"
+           aria-label="Escolher: Pop Contemporâneo">
+        <div class="amostra amostra-pop" aria-hidden="true"></div>
+        <div class="card-info">
+          <div class="card-nome">Pop Contemporâneo</div>
+          <div class="card-descricao">Duas cores vibrantes, divisão geométrica.</div>
+        </div>
+      </div>
+
+      <!-- 5 · Arquivo / Dossiê -->
+      <div class="card-estilo" tabindex="0" role="button"
+           onclick="escolherEstilo(5)" onkeydown="teclaCard(event,5)"
+           aria-label="Escolher: Arquivo / Dossiê">
+        <div class="amostra amostra-arquivo" aria-hidden="true"></div>
+        <div class="card-info">
+          <div class="card-nome">Arquivo / Dossiê</div>
+          <div class="card-descricao">Estética de ficha de pesquisa.</div>
+        </div>
+      </div>
+
+      <!-- 6 · Dado em Destaque -->
+      <div class="card-estilo" tabindex="0" role="button"
+           onclick="escolherEstilo(6)" onkeydown="teclaCard(event,6)"
+           aria-label="Escolher: Dado em Destaque">
+        <div class="amostra amostra-dado" aria-hidden="true"></div>
+        <div class="card-info">
+          <div class="card-nome">Dado em Destaque</div>
+          <div class="card-descricao">Um número gigante é a imagem.</div>
+        </div>
+      </div>
+
+    </div><!-- /grid-estilos -->
+  </div><!-- /tela-1 -->
+
+
+  <!-- ============================================================
+       TELA 2 — TURMA E CONFIGURAÇÃO DA DUPLA
+  ============================================================ -->
+  <div id="tela-2" class="tela">
+    <h2 class="titulo-tela">Sua turma e sua dupla</h2>
+    <p class="subtitulo-tela">Isso ajusta as dicas que aparecem quando você preencher os dados.</p>
+
+    <!-- (a) Turma -->
+    <div class="grupo-botoes">
+      <span class="label-grupo">Qual é a sua turma?</span>
+      <div class="botoes-opcao">
+        <button class="btn-turma" id="btn-turma-16"  onclick="escolherTurma('1º6',  'btn-turma-16')">1º 6</button>
+        <button class="btn-turma" id="btn-turma-17"  onclick="escolherTurma('1º7',  'btn-turma-17')">1º 7</button>
+        <button class="btn-turma" id="btn-turma-112" onclick="escolherTurma('1º12', 'btn-turma-112')">1º 12</button>
+      </div>
+    </div>
+
+    <!-- (b) Configuração da dupla -->
+    <div class="grupo-botoes">
+      <span class="label-grupo">Como sua dupla se organizou?</span>
+      <div class="botoes-opcao" style="flex-direction: column; align-items: flex-start;">
+        <button class="btn-config" id="btn-config-1" onclick="escolherConfig(1)">
+          <strong>Mesma PRÁTICA, significados diferentes</strong>
+          <span>Vocês dois pesquisaram a mesma prática, mas cada um identificou uma dimensão diferente.</span>
+        </button>
+        <button class="btn-config" id="btn-config-2" onclick="escolherConfig(2)">
+          <strong>Mesmo SIGNIFICADO, práticas diferentes</strong>
+          <span>Cada um investigou uma prática diferente, mas chegaram à mesma dimensão de significado.</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="erro-tela2" class="msg-erro" role="alert">
+      Por favor, escolha sua turma e a configuração da dupla antes de continuar.
+    </div>
+
+    <button class="btn-principal" onclick="avancarTela2()">Continuar →</button>
+    <button class="btn-secundario" onclick="irParaTela(1)">← Voltar e mudar o estilo</button>
+  </div><!-- /tela-2 -->
+
+
+  <!-- ============================================================
+       TELA 3 — FORMULÁRIO DOS DADOS DA FICHA
+  ============================================================ -->
+  <div id="tela-3" class="tela">
+    <h2 class="titulo-tela">Os dados da sua ficha-postal</h2>
+    <p class="subtitulo-tela">Preencha com as informações da <strong>sua própria</strong> pesquisa.</p>
+
+    <div id="erro-tela3" class="msg-erro" role="alert">
+      Preencha todos os campos antes de gerar o prompt.
+    </div>
+
+    <!-- ————————————————————————————————————————
+         SEÇÃO: Cor da ficha — complementaridade da dupla
+         O primeiro estudante escolhe qualquer cor e avisa o colega.
+         O segundo clica na cor do colega e vê automaticamente a sua.
+    ———————————————————————————————————————— -->
+    <div class="secao-cor">
+      <span class="label-grupo">Cor da sua ficha</span>
+
+      <!-- Passo 1: primeiro ou segundo a preencher? -->
+      <p class="pergunta-ordem">Você é o primeiro ou o segundo da dupla a preencher este formulário?</p>
+      <div class="botoes-ordem">
+        <button class="btn-ordem" id="btn-ordem-primeiro" onclick="escolherOrdem('primeiro')">
+          Sou o primeiro
+        </button>
+        <button class="btn-ordem" id="btn-ordem-segundo" onclick="escolherOrdem('segundo')">
+          Sou o segundo
+        </button>
+      </div>
+
+      <!-- Bloco A: primeiro estudante escolhe qualquer cor -->
+      <div id="bloco-primeiro" style="display:none">
+        <p class="instrucao-cor">Escolha a cor principal da <strong>sua</strong> ficha:</p>
+        <div class="grade-cores" id="grade-primeiro">
+          <!-- Preenchido dinamicamente por montarSwatches() -->
+        </div>
+        <!-- Aviso para repassar ao parceiro (aparece após escolher) -->
+        <div class="aviso-parceiro" id="aviso-parceiro" style="display:none"></div>
+      </div>
+
+      <!-- Bloco B: segundo estudante indica a cor do colega → recebe a complementar -->
+      <div id="bloco-segundo" style="display:none">
+        <p class="instrucao-cor">Clique na cor que <strong>seu colega</strong> escolheu:</p>
+        <div class="grade-cores" id="grade-segundo">
+          <!-- Preenchido dinamicamente por montarSwatches() -->
+        </div>
+        <!-- Resultado: a cor complementar é selecionada automaticamente -->
+        <div class="aviso-complementar" id="aviso-complementar" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- Campo 1: Nome da prática -->
+    <div class="campo">
+      <label for="campo-pratica">Nome da prática cultural</label>
+      <input type="text" id="campo-pratica"
+             placeholder="Ex: Festa da Tainha, Puxada de rede, Bordado de baleia…"
+             aria-describedby="ajuda-pratica">
+      <p class="campo-ajuda" id="ajuda-pratica">O nome que identifica a prática que você investigou.</p>
+    </div>
+
+    <!-- Campo 2: Dimensão de significado (botões) -->
+    <div class="campo">
+      <label>Dimensão de significado</label>
+      <div class="botoes-dimensao" role="group" aria-label="Escolha a dimensão de significado">
+        <button class="btn-dimensao" data-dim="Memória"
+                id="dim-memoria" onclick="escolherDimensao('Memória')">Memória</button>
+        <button class="btn-dimensao" data-dim="Identidade"
+                id="dim-identidade" onclick="escolherDimensao('Identidade')">Identidade</button>
+        <button class="btn-dimensao" data-dim="Pertencimento"
+                id="dim-pertencimento" onclick="escolherDimensao('Pertencimento')">Pertencimento</button>
+      </div>
+      <p class="campo-ajuda">A dimensão que você identificou na sua análise sociológica.</p>
+    </div>
+
+    <!-- Campo 3: Frase de impacto — dica dinâmica conforme configuração da dupla -->
+    <div class="campo">
+      <label for="campo-frase">Frase de impacto</label>
+      <input type="text" id="campo-frase"
+             placeholder="A frase curta e forte que você escreveu na Aula 6…"
+             aria-describedby="dica-frase">
+      <p class="campo-ajuda destaque" id="dica-frase">
+        <!-- Texto preenchido em JavaScript conforme configuração escolhida na Tela 2 -->
+      </p>
+    </div>
+
+    <!-- Campo 4: Quem ensinou -->
+    <div class="campo">
+      <label for="campo-quem">Quem ensinou essa prática</label>
+      <input type="text" id="campo-quem"
+             placeholder="Ex: o avô, em encontros de família"
+             aria-describedby="ajuda-quem">
+      <p class="campo-ajuda" id="ajuda-quem">Escreva como se estivesse contando para alguém que não conhece sua história.</p>
+    </div>
+
+    <!-- Campo 5: O que mudou com o tempo -->
+    <div class="campo">
+      <label for="campo-mudou">O que mudou com o tempo</label>
+      <input type="text" id="campo-mudou"
+             placeholder="Uma frase sobre como essa prática se transformou…"
+             aria-describedby="ajuda-mudou">
+      <p class="campo-ajuda" id="ajuda-mudou">Uma frase curta e específica.</p>
+    </div>
+
+    <!-- Campo 6: Elemento visual da dupla — aparece nas duas fichas -->
+    <div class="campo">
+      <label for="campo-elemento">Elemento visual da dupla</label>
+      <input type="text" id="campo-elemento"
+             placeholder="Ex: uma rede de pesca, um anzol, uma vela de barco…"
+             aria-describedby="dica-elemento">
+      <p class="campo-ajuda destaque" id="dica-elemento">
+        <!-- Texto preenchido em JavaScript conforme configuração escolhida na Tela 2 -->
+      </p>
+    </div>
+
+    <button class="btn-principal" onclick="gerarPrompt()">Gerar meu prompt →</button>
+    <button class="btn-secundario" onclick="irParaTela(2)">← Voltar</button>
+  </div><!-- /tela-3 -->
+
+
+  <!-- ============================================================
+       TELA 4 — PROMPT PRONTO PARA COPIAR
+  ============================================================ -->
+  <div id="tela-4" class="tela">
+    <h2 class="titulo-tela">Seu prompt está pronto!</h2>
+    <p class="subtitulo-tela">Copie o texto abaixo e cole na ferramenta de IA do Canva.</p>
+
+    <!-- Etiqueta com o estilo escolhido -->
+    <div class="tag-estilo" id="tag-estilo-escolhido">Estilo: —</div>
+
+    <!-- Passo a passo de uso -->
+    <div class="caixa-instrucao">
+      <strong>Como usar no Canva:</strong>
+      1. Abra o Canva e crie um novo design em formato A5.<br>
+      2. Clique em "Gerar com IA" (ou "Magic Media" / "Text to Image").<br>
+      3. Cole o texto copiado e clique em gerar.<br>
+      4. Escolha a imagem que ficou melhor e adicione os textos da sua ficha sobre ela.
+    </div>
+
+    <!-- Bloco com o prompt gerado -->
+    <pre class="bloco-prompt" id="prompt-gerado" aria-label="Prompt gerado para copiar"></pre>
+
+    <!-- Botão principal: copiar -->
+    <button class="btn-copiar" id="btn-copiar" onclick="copiarPrompt()">
+      📋 COPIAR PROMPT
+    </button>
+
+    <hr class="divisor">
+
+    <button class="btn-secundario" onclick="irParaTela(3)">← Voltar e editar os dados</button>
+    <button class="btn-secundario" onclick="recomecar()">↺ Recomeçar do início</button>
+  </div><!-- /tela-4 -->
+
+</main>
+
+
+<!-- ============================================================
+     JAVASCRIPT
+     Toda a lógica está comentada em português para facilitar
+     a edição dos textos e comportamentos pelo professor.
+============================================================ -->
+<script>
+  /* ============================================================
+     DADOS DOS ESTILOS
+     Se precisar editar um prompt-base, altere o valor
+     "promptBase" no objeto correspondente abaixo.
+  ============================================================ */
+  var estilos = {
+    1: {
+      nome: "Poster Minimalista",
+      promptBase: "cartaz A3 estilo poster minimalista contemporâneo, como cartazes de festival cultural ou exposição de museu, tipografia como elemento gráfico principal, sem textura de papel, sem bordas decorativas, sem clipart"
+    },
+    2: {
+      nome: "Editorial de Revista",
+      promptBase: "cartaz A3 estilo editorial de revista contemporânea, blocos de cor sólidos dividindo o espaço, sem gradiente, sem textura, só tipografia e blocos de cor"
+    },
+    3: {
+      nome: "Linha Fina Ilustrativa",
+      promptBase: "cartaz A3 com fundo claro e um único desenho de linha fina estilo ilustração botânica ou técnica, uma só cor de traço, sem preenchimento sólido, sem sombra"
+    },
+    4: {
+      nome: "Pop Contemporâneo",
+      promptBase: "cartaz A3 estilo pop contemporâneo, duas cores vibrantes contrastantes em divisão diagonal ou blocos geométricos, tipografia sólida e grande, cores chapadas, sem textura, sem gradiente"
+    },
+    5: {
+      nome: "Arquivo / Dossiê",
+      promptBase: "cartaz A3 estilo ficha de arquivo ou dossiê de pesquisa, fundo escuro com fonte monoespaçada em tom claro, linhas finas de separação, sem ilustração figurativa"
+    },
+    6: {
+      nome: "Dado em Destaque",
+      promptBase: "cartaz A3 onde o elemento visual principal é um número grande em cor de destaque ocupando o centro, fundo claro, sem textura, sem ilustração, o número é a imagem"
+    }
+  };
+
+  /* Cores de paleta por dimensão de significado
+     Para mudar uma cor, edite o valor aqui e também no CSS dos botões (.btn-dimensao.selecionado). */
+  var coresDimensao = {
+    "Memória":       "terracota #C1543C",
+    "Identidade":    "azul petróleo #1D4E5C",
+    "Pertencimento": "verde #3B6D11"
+  };
+
+  /* Dica dinâmica para o campo "Frase de impacto" conforme a configuração da dupla */
+  var dicaFrase = {
+    1: "Sua frase mostra a SUA leitura da prática que vocês dois investigaram.",
+    2: "Sua frase mostra a prática que VOCÊ investigou, ligada ao significado que vocês têm em comum."
+  };
+
+  /* Dica dinâmica para o campo "Elemento visual da dupla" */
+  var dicaElemento = {
+    1: "Um objeto, símbolo ou imagem que aparece nas duas fichas e conecta as duas leituras da mesma prática. Combinem antes de preencher!",
+    2: "Um objeto, símbolo ou imagem que aparece nas duas fichas e mostra o que une as duas práticas diferentes ao mesmo significado. Combinem antes de preencher!"
+  };
+
+  /* ============================================================
+     PALETA DE CORES — 6 cores em 3 pares complementares
+     Para trocar uma cor: edite "hex" e "nome".
+     Não mude os "id" nem os "parId" — eles ligam os pares.
+  ============================================================ */
+  var paleta = {
+    'A1': { nome: 'Terracota',      hex: '#C1543C', parId: 'A2' },
+    'A2': { nome: 'Azul-petróleo',  hex: '#1D4E5C', parId: 'A1' },
+    'B1': { nome: 'Âmbar',          hex: '#D4850A', parId: 'B2' },
+    'B2': { nome: 'Anil',           hex: '#1F3864', parId: 'B1' },
+    'C1': { nome: 'Verde-musgo',    hex: '#3B6D11', parId: 'C2' },
+    'C2': { nome: 'Vinho',          hex: '#6D1130', parId: 'C1' }
+  };
+  /* Ordem de exibição das cores na grade */
+  var ordemPaleta = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+  /* ============================================================
+     VARIÁVEIS DE ESTADO
+     Guardamos aqui tudo que o estudante escolheu.
+     NÃO usamos localStorage — o estado fica só na memória
+     enquanto a aba do navegador estiver aberta.
+  ============================================================ */
+  var estiloEscolhido   = null;   /* número 1–6 */
+  var turmaEscolhida    = null;   /* '1º6', '1º7' ou '1º12' */
+  var configEscolhida   = null;   /* 1 ou 2 */
+  var dimensaoEscolhida = null;   /* 'Memória', 'Identidade' ou 'Pertencimento' */
+  var ordemDupla        = null;   /* 'primeiro' ou 'segundo' */
+  var corEscolhida      = null;   /* id da cor deste estudante, ex: 'A1' */
+
+
+  /* ============================================================
+     NAVEGAÇÃO ENTRE TELAS
+  ============================================================ */
+  function irParaTela(numero) {
+    /* Esconde todas as telas */
+    var telas = document.querySelectorAll('.tela');
+    for (var i = 0; i < telas.length; i++) {
+      telas[i].classList.remove('ativa');
+    }
+
+    /* Mostra a tela solicitada */
+    document.getElementById('tela-' + numero).classList.add('ativa');
+
+    /* Atualiza a barra de progresso */
+    for (var p = 1; p <= 4; p++) {
+      var el = document.getElementById('passo-' + p);
+      el.classList.remove('ativo', 'concluido');
+      if (p < numero)  el.classList.add('concluido');
+      if (p === numero) el.classList.add('ativo');
+    }
+
+    /* Rola para o topo da página */
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+
+  /* ============================================================
+     TELA 1: escolha do estilo
+  ============================================================ */
+  function escolherEstilo(numero) {
+    estiloEscolhido = numero;
+    irParaTela(2);
+  }
+
+  /* Navegação por teclado nos cards (Enter ou Espaço ativam o card) */
+  function teclaCard(evento, numero) {
+    if (evento.key === 'Enter' || evento.key === ' ') {
+      evento.preventDefault();
+      escolherEstilo(numero);
+    }
+  }
+
+
+  /* ============================================================
+     TELA 2: turma e configuração
+  ============================================================ */
+  function escolherTurma(turma, idBotao) {
+    turmaEscolhida = turma;
+
+    /* Remove destaque de todos os botões de turma */
+    var todos = document.querySelectorAll('.btn-turma');
+    for (var i = 0; i < todos.length; i++) {
+      todos[i].classList.remove('selecionado');
+    }
+
+    /* Destaca o botão clicado */
+    document.getElementById(idBotao).classList.add('selecionado');
+  }
+
+  function escolherConfig(numero) {
+    configEscolhida = numero;
+
+    /* Remove destaque dos dois botões de configuração */
+    document.getElementById('btn-config-1').classList.remove('selecionado');
+    document.getElementById('btn-config-2').classList.remove('selecionado');
+
+    /* Destaca o escolhido */
+    document.getElementById('btn-config-' + numero).classList.add('selecionado');
+  }
+
+  function avancarTela2() {
+    /* Valida: as duas escolhas precisam ter sido feitas */
+    if (!turmaEscolhida || !configEscolhida) {
+      document.getElementById('erro-tela2').style.display = 'block';
+      return;
+    }
+    document.getElementById('erro-tela2').style.display = 'none';
+
+    /* Atualiza as dicas dinâmicas conforme a configuração */
+    document.getElementById('dica-frase').textContent   = dicaFrase[configEscolhida];
+    document.getElementById('dica-elemento').textContent = dicaElemento[configEscolhida];
+
+    irParaTela(3);
+  }
+
+
+  /* ============================================================
+     TELA 3: cores complementares
+  ============================================================ */
+
+  /* Monta os swatches (bolinhas de cor) dentro de um container.
+     "containerId" é o id da div-grade; "fnClicar" é o nome da
+     função JS (como string) que será chamada ao clicar. */
+  function montarSwatches(containerId, fnClicar) {
+    var container = document.getElementById(containerId);
+    container.innerHTML = '';
+    for (var i = 0; i < ordemPaleta.length; i++) {
+      var id  = ordemPaleta[i];
+      var cor = paleta[id];
+      var item = document.createElement('div');
+      item.className = 'swatch-item';
+      item.innerHTML =
+        '<button class="swatch" ' +
+          'id="sw-' + containerId + '-' + id + '" ' +
+          'style="background:' + cor.hex + '" ' +
+          'onclick="' + fnClicar + '(\'' + id + '\')" ' +
+          'aria-label="' + cor.nome + '" ' +
+          'title="' + cor.nome + ' ' + cor.hex + '">' +
+        '</button>' +
+        '<span class="swatch-label">' + cor.nome + '</span>';
+      container.appendChild(item);
+    }
+  }
+
+  /* Chamado ao clicar em "Sou o primeiro" ou "Sou o segundo" */
+  function escolherOrdem(ordem) {
+    ordemDupla   = ordem;
+    corEscolhida = null;
+
+    /* Destaca o botão de ordem escolhido */
+    document.getElementById('btn-ordem-primeiro').classList.remove('selecionado');
+    document.getElementById('btn-ordem-segundo').classList.remove('selecionado');
+    document.getElementById('btn-ordem-' + ordem).classList.add('selecionado');
+
+    /* Esconde os dois blocos de cor e oculta avisos anteriores */
+    document.getElementById('bloco-primeiro').style.display     = 'none';
+    document.getElementById('bloco-segundo').style.display      = 'none';
+    document.getElementById('aviso-parceiro').style.display     = 'none';
+    document.getElementById('aviso-complementar').style.display = 'none';
+
+    if (ordem === 'primeiro') {
+      montarSwatches('grade-primeiro', 'escolherCorPrimeiro');
+      document.getElementById('bloco-primeiro').style.display = 'block';
+    } else {
+      montarSwatches('grade-segundo', 'escolherCorColega');
+      document.getElementById('bloco-segundo').style.display = 'block';
+    }
+  }
+
+  /* Primeiro estudante clica em uma das 6 cores */
+  function escolherCorPrimeiro(id) {
+    corEscolhida = id;
+    var cor     = paleta[id];
+    var complem = paleta[cor.parId];
+
+    /* Atualiza visual: destaca a cor escolhida, reseta as outras */
+    for (var i = 0; i < ordemPaleta.length; i++) {
+      var sw = document.getElementById('sw-grade-primeiro-' + ordemPaleta[i]);
+      if (sw) {
+        sw.classList.remove('minha-cor', 'cor-colega', 'complementar');
+        if (ordemPaleta[i] === id) sw.classList.add('minha-cor');
+      }
+    }
+
+    /* Mostra mensagem para repassar ao parceiro */
+    var aviso = document.getElementById('aviso-parceiro');
+    aviso.innerHTML =
+      '<strong>Sua cor: ' + cor.nome + ' (' + cor.hex + ')</strong>' +
+      'Avise seu colega de dupla: a cor complementar dele é ' +
+      '<strong>' + complem.nome + ' (' + complem.hex + ')</strong>. ' +
+      'Ele deve clicar nessa cor quando preencher o formulário.';
+    aviso.style.display = 'block';
+  }
+
+  /* Segundo estudante clica na cor do colega → app define a cor complementar */
+  function escolherCorColega(idColega) {
+    var corColega = paleta[idColega];
+    var idMinha   = corColega.parId;   /* complementar = a cor deste estudante */
+    corEscolhida  = idMinha;
+    var minha = paleta[idMinha];
+
+    /* Atualiza visual: cor do colega fica apagada, complementar fica destacada */
+    for (var i = 0; i < ordemPaleta.length; i++) {
+      var sw = document.getElementById('sw-grade-segundo-' + ordemPaleta[i]);
+      if (sw) {
+        sw.classList.remove('minha-cor', 'cor-colega', 'complementar');
+        if (ordemPaleta[i] === idColega) sw.classList.add('cor-colega');
+        if (ordemPaleta[i] === idMinha)  sw.classList.add('complementar');
+      }
+    }
+
+    /* Mostra resultado */
+    var aviso = document.getElementById('aviso-complementar');
+    aviso.innerHTML =
+      '<strong>Sua cor: ' + minha.nome + ' (' + minha.hex + ')</strong>' +
+      'Complementar ao ' + corColega.nome + ' (' + corColega.hex + ') do seu colega. ' +
+      'As duas fichas formarão uma harmonia de cores!';
+    aviso.style.display = 'block';
+  }
+
+  /* ============================================================
+     TELA 3: formulário
+  ============================================================ */
+  function escolherDimensao(dimensao) {
+    dimensaoEscolhida = dimensao;
+
+    /* Remove seleção de todos os botões de dimensão */
+    var botoes = document.querySelectorAll('.btn-dimensao');
+    for (var i = 0; i < botoes.length; i++) {
+      botoes[i].classList.remove('selecionado');
+    }
+
+    /* Mapa de dimensão → ID do botão */
+    var mapa = {
+      'Memória':       'dim-memoria',
+      'Identidade':    'dim-identidade',
+      'Pertencimento': 'dim-pertencimento'
+    };
+    document.getElementById(mapa[dimensao]).classList.add('selecionado');
+  }
+
+  function gerarPrompt() {
+    /* Lê os valores digitados */
+    var pratica  = document.getElementById('campo-pratica').value.trim();
+    var frase    = document.getElementById('campo-frase').value.trim();
+    var quem     = document.getElementById('campo-quem').value.trim();
+    var mudou    = document.getElementById('campo-mudou').value.trim();
+    var elemento = document.getElementById('campo-elemento').value.trim();
+
+    /* Valida: todos os campos são obrigatórios, incluindo a cor */
+    if (!pratica || !dimensaoEscolhida || !frase || !quem || !mudou || !elemento || !corEscolhida) {
+      document.getElementById('erro-tela3').style.display = 'block';
+      return;
+    }
+    document.getElementById('erro-tela3').style.display = 'none';
+
+    /* Monta o texto final do prompt juntando todas as partes */
+    var estilo    = estilos[estiloEscolhido];
+    var corDim    = coresDimensao[dimensaoEscolhida];
+    var corFicha  = paleta[corEscolhida];
+    var corComplem = paleta[corFicha.parId];
+
+    var promptFinal =
+      estilo.promptBase + ". " +
+      "Paleta de cores conforme a dimensão: " + dimensaoEscolhida + "=" + corDim + ", texto legível com bom contraste. " +
+      "Cor principal da composição: " + corFicha.nome + " " + corFicha.hex + ", em harmonia complementar com " + corComplem.nome + " " + corComplem.hex + " (cor da ficha do colega de dupla). " +
+      "Título da ficha: '" + pratica + "'. " +
+      "Rótulo em destaque: '" + dimensaoEscolhida + "'. " +
+      "Frase central em tipografia grande: '" + frase + "'. " +
+      "Elemento visual da dupla: incluir como detalhe sutil na composição um(a) " + elemento + ", conectando visualmente as duas fichas da dupla. " +
+      "No rodapé, texto pequeno: 'Quem ensinou: " + quem + " · O que mudou: " + mudou + " · Sociologia · 1º Ano · EEB Nereu Ramos · Fios de Itapoá'. " +
+      "Formato A5, sem texto em inglês, sem marca d'água.";
+
+    /* Exibe o prompt na Tela 4 */
+    document.getElementById('prompt-gerado').textContent = promptFinal;
+
+    /* Atualiza a etiqueta do estilo escolhido */
+    document.getElementById('tag-estilo-escolhido').textContent = "Estilo: " + estilo.nome;
+
+    /* Reseta o botão de copiar (caso o estudante volte e gere de novo) */
+    var btn = document.getElementById('btn-copiar');
+    btn.textContent = '📋 COPIAR PROMPT';
+    btn.classList.remove('copiado');
+
+    irParaTela(4);
+  }
+
+
+  /* ============================================================
+     TELA 4: copiar o prompt
+  ============================================================ */
+  function copiarPrompt() {
+    var texto  = document.getElementById('prompt-gerado').textContent;
+    var btn    = document.getElementById('btn-copiar');
+
+    /* Tenta usar a API moderna de clipboard (funciona em HTTPS e localhost) */
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto)
+        .then(function() {
+          confirmarCopiado(btn);
+        })
+        .catch(function() {
+          /* Se falhar (ex.: página aberta em HTTP), usa o método antigo */
+          copiarFallback(texto, btn);
+        });
+    } else {
+      /* Navegadores antigos que não têm navigator.clipboard */
+      copiarFallback(texto, btn);
+    }
+  }
+
+  /* Método de cópia compatível com navegadores mais antigos */
+  function copiarFallback(texto, btn) {
+    var area = document.createElement('textarea');
+    area.value = texto;
+    area.style.position = 'fixed';
+    area.style.top  = '-9999px';
+    area.style.left = '-9999px';
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    try {
+      document.execCommand('copy');
+      confirmarCopiado(btn);
+    } catch (erro) {
+      /* Último recurso: pede para o estudante copiar manualmente */
+      alert('Não foi possível copiar automaticamente.\nSelecione todo o texto acima e pressione Ctrl+C (ou Cmd+C no Mac).');
+    }
+    document.body.removeChild(area);
+  }
+
+  /* Feedback visual após copiar com sucesso */
+  function confirmarCopiado(btn) {
+    btn.textContent = '✓ Copiado! Agora cole no Canva.';
+    btn.classList.add('copiado');
+
+    /* Volta ao texto original depois de 3 segundos */
+    setTimeout(function() {
+      btn.textContent = '📋 COPIAR PROMPT';
+      btn.classList.remove('copiado');
+    }, 3000);
+  }
+
+  /* Recomeça do zero: volta à Tela 1 e limpa todo o estado */
+  function recomecar() {
+    /* Reseta variáveis */
+    estiloEscolhido   = null;
+    turmaEscolhida    = null;
+    configEscolhida   = null;
+    dimensaoEscolhida = null;
+    ordemDupla        = null;
+    corEscolhida      = null;
+
+    /* Reseta seção de cores */
+    document.getElementById('btn-ordem-primeiro').classList.remove('selecionado');
+    document.getElementById('btn-ordem-segundo').classList.remove('selecionado');
+    document.getElementById('bloco-primeiro').style.display     = 'none';
+    document.getElementById('bloco-segundo').style.display      = 'none';
+    document.getElementById('aviso-parceiro').style.display     = 'none';
+    document.getElementById('aviso-complementar').style.display = 'none';
+
+    /* Limpa campos de texto */
+    document.getElementById('campo-pratica').value  = '';
+    document.getElementById('campo-frase').value    = '';
+    document.getElementById('campo-quem').value     = '';
+    document.getElementById('campo-mudou').value    = '';
+    document.getElementById('campo-elemento').value = '';
+
+    /* Remove todos os destaques de seleção */
+    var marcados = document.querySelectorAll('.selecionado');
+    for (var i = 0; i < marcados.length; i++) {
+      marcados[i].classList.remove('selecionado');
+    }
+    var dimMarcados = document.querySelectorAll('.btn-dimensao');
+    for (var i = 0; i < dimMarcados.length; i++) {
+      dimMarcados[i].classList.remove('selecionado');
+    }
+
+    /* Esconde mensagens de erro */
+    document.getElementById('erro-tela2').style.display = 'none';
+    document.getElementById('erro-tela3').style.display = 'none';
+
+    irParaTela(1);
+  }
+</script>
+
+</body>
+</html>
